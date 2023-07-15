@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Product Filter</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Cairo&display=swap');
+
+    body {
+      font-family: 'Cairo', sans-serif;
+      margin: 0;
+      box-sizing: border-box;
+      display: flex;
+      justify-content: center;
+      flex-flow: column nowrap;
+      align-items: center;
+      gap: 20px;
+      background-color: whitesmoke;
+    }
+
+    .container {
+      max-width: 960px;
+      width: 100%;
+      display: flex;
+      flex-flow: column nowrap;
+      gap: 20px;
+    }
+
+    header {
+      display: flex;
+      flex: 100%;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .search-bar {
+      text-align: right;
+    }
+
+    .search-bar input {
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 20px 0 0 20px;
+      direction: rtl;
+      /* Right-to-left direction for Arabic */
+      outline: none;
+      font-size: 16px;
+    }
+
+    select {
+      border: 1px solid #ccc;
+      padding: 10px;
+      border-radius: 0 20px 20px 0;
+      outline: none;
+      direction: rtl;
+      font-size: 16px;
+    }
+
+    select option {
+      font-size: 24px;
+    }
+
+    main {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 20px;
+    }
+
+    .card {
+      display: flex;
+      flex: 40%;
+      flex-basis: calc(25% - 20px);
+      min-width: 230px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      direction: rtl;
+      /* Right-to-left direction for Arabic */
+      text-align: right;
+      /* Right alignment for Arabic */
+      flex-flow: column nowrap;
+      row-gap: 10px;
+    }
+
+    .img-container {
+      /* background-color: rebeccapurple; */
+      height: 200px;
+    }
+
+    .product-info {
+      /* background-color: aquamarine; */
+    }
+
+    .product-info h3 {
+      margin-top: 0;
+    }
+
+    .product-info p {
+      margin: 0;
+    }
+
+    .img-container img {
+      width: 100%;
+      height: 100%;
+      /* Set a fixed height for the image container */
+      object-fit: contain;
+      /* Maintain the aspect ratio and fit the image within the container */
+      /* background-color: #f0f0f0; */
+      /* Optional: Add a background color for the image container */
+    }
+
+    @media only screen and (max-width: 360px) {
+      header {
+        flex-flow: column wrap;
+        row-gap: 20px;
+      }
+
+      .search-bar input,
+      select {
+        border-radius: 20px;
+      }
+
+      .card {
+        width: 95%;
+        min-width: 95%;
+      }
+    }
+
+    .company{
+      display: flex;
+      flex-flow: row wrap;
+      max-width: 960px;
+      width: 100%;
+      justify-content: space-between;
+    }
+
+    .company img{
+      width: 200px;
+      height: 200px;
+      object-fit: cover;
+      margin: 0 10px;
+    }
+
+    .company div{
+      margin: 0 10px;
+    }
+
+    .company div{
+      text-align: right;
+    }
+
+    hr{
+      max-width: 960px;
+      width: 100%;
+    }
+
+    @media only screen and (max-width: 500px) {
+      .company{
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .company div{
+        text-align: center;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <section class="company">
+    <img src="images/logo1.svg">
+    <div>
+      <h1>فرۆشگای هارون</h1>
+      <p>بۆ پێداویستی ڕۆژانەی مارکێت</p>
+<p>سلێمانی بازاڕی نوری خەفاف - ژێرپردەکە</p>
+      <p>م: 07701311743 - 07701422339</p>
+    </div>
+  </section>
+  <hr>
+  <section class="container">
+    <header>
+      <div class="search-bar">
+        <input type="text" id="name" onkeyup="filterProducts()" placeholder="ابحث باسم المنتج">
+      </div>
+
+      <select id="category" onchange="filterProducts()">
+        <option value="">الكل</option>
+      </select>
+    </header>
+
+    <main id="product-list"></main>
+  </section>
+
+  <script>
+    // Fetch data from API
+    async function fetchData() {
+      try {
+        const response = await fetch('https://raw.githubusercontent.com/AbdulrahmanTawfeeq/UploadPage/main/data.json'); // Replace <API_ENDPOINT> with the actual API URL
+        const data = await response.json();
+        return data;
+      } catch (error) {
+        console.error('Error fetching data:', error);
+        return [];
+      }
+    }
+
+    // Initialize the page
+    async function initializePage() {
+      const data = await fetchData();
+      displayProducts(data);
+      populateCategoryDropdown(data);
+    }
+
+    // Display products based on filters
+    function displayProducts(products) {
+      const productList = document.getElementById('product-list');
+      productList.innerHTML = '';
+
+      const categoryFilter = getCategoryFilter();
+      const nameFilter = document.getElementById('name').value;
+
+      for (let i = 0; i < products.length; i++) {
+        const product = products[i];
+
+        if (categoryFilter && product.family_name !== categoryFilter) {
+          continue; // Skip this product
+        }
+        if (nameFilter && !product.product_name.includes(nameFilter)) {
+          continue; // Skip this product
+        }
+
+        const card = document.createElement('div');
+        card.classList.add('card');
+
+        const imageContainer = document.createElement('div');
+        imageContainer.classList.add('img-container');
+
+        const productInfo = document.createElement('div');
+        productInfo.classList.add('product-info');
+
+        const productName = document.createElement('h3');
+        productName.textContent = product.product_name;
+
+        const productPacking = document.createElement('p');
+        productPacking.textContent = 'التعبئة: ' + product.product_packing;
+
+        const familyName = document.createElement('p');
+        familyName.textContent = 'اسم العائلة: ' + (product.family_name || 'N/A');
+
+        const unitName = document.createElement('p');
+        unitName.textContent = 'اسم الوحدة: ' + product.unit_name;
+
+        const productImage = document.createElement('img');
+        productImage.src = `images/${product.product_name}.jpg`;
+
+        productImage.onerror = function () {
+          // Handle the error here, such as setting a default image
+          productImage.src = `images/default.svg`;
+        };
+
+        imageContainer.appendChild(productImage);
+        productInfo.appendChild(productName);
+        productInfo.appendChild(productPacking);
+        productInfo.appendChild(familyName);
+        productInfo.appendChild(unitName);
+
+        card.appendChild(imageContainer);
+        card.appendChild(productInfo);
+
+        productList.appendChild(card);
+
+      }
+    }
+
+    // Get the currently selected category filter
+    function getCategoryFilter() {
+      const categoryDropdown = document.getElementById('category');
+      return categoryDropdown.value;
+    }
+
+    // Populate category dropdown dynamically
+    function populateCategoryDropdown(products) {
+      const categoryDropdown = document.getElementById('category');
+      categoryDropdown.innerHTML = '';
+
+      const categories = new Set();
+      for (let i = 0; i < products.length; i++) {
+        const product = products[i];
+        if (product.family_name) {
+          categories.add(product.family_name);
+        }
+      }
+
+      const allOption = document.createElement('option');
+      allOption.textContent = 'الكل';
+      allOption.value = '';
+      categoryDropdown.appendChild(allOption);
+
+      for (const category of categories) {
+        const option = document.createElement('option');
+        option.textContent = category;
+        option.value = category;
+        categoryDropdown.appendChild(option);
+      }
+    }
+
+    // Filter products based on name
+    async function filterProducts() {
+      const categoryFilter = getCategoryFilter();
+      const data = await fetchData();
+      displayProducts(data);
+    }
+
+    // Initialize the page
+    initializePage();
+  </script>
+</body>
+
+</html>
